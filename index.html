@@ -209,7 +209,7 @@
                 <button class="btn btn-small" onclick="drawFilteredRandom()">🎲 Losuj z filtrów</button>
             </div>
 
-            <div id="database-list" class="list-container">Ładowanie bazy danych...</div>
+            <div id="database-list" class="list-container">Wczytywanie pliku spells.json...</div>
         </div>
 
         <div style="display: flex; gap: 10px; margin-top: 15px;">
@@ -243,16 +243,17 @@
 </div>
 
 <script>
-    let currentProfileIndex = 0;
     let spellsDB = [];
-    
-    // Słownik postępu czarów dla profilu: { "NazwaCzaru": liczbaKółek (1..5) }
+    let currentProfileIndex = 0;
     let profileProgress = {}; 
     let selectedSpellName = null;
 
     async function loadDatabase() {
         try {
-            const response = await fetch('spells.json');
+            // Pobieranie pliku z unpamiętnianiem cache (?v=1)
+            const response = await fetch('./spells.json?v=' + Date.now());
+            if (!response.ok) throw new Error('Brak dostępu do pliku spells.json (Status ' + response.status + ')');
+            
             spellsDB = await response.json();
             
             populateCategoryFilter();
@@ -260,16 +261,16 @@
             renderAllSections();
         } catch (e) {
             console.error("Błąd ładowania spells.json:", e);
-            document.getElementById('database-list').innerText = "Błąd wczytywania bazy z pliku spells.json!";
+            document.getElementById('database-list').innerText = "⚠️ Nie udało się wczytać pliku spells.json. Upewnij się, że plik znajduje się w repozytorium.";
         }
     }
 
     function populateCategoryFilter() {
         const catSelect = document.getElementById('filter-category');
+        catSelect.innerHTML = '<option value="ALL">-- Wszystkie lata i kategorie --</option>';
         const categories = new Set();
         spellsDB.forEach(s => { if(s.category) categories.add(s.category); });
 
-        // Dodaj unikaty z pliku do listy rozwijalnej
         categories.forEach(cat => {
             const opt = document.createElement('option');
             opt.value = cat;
@@ -337,7 +338,6 @@
         renderAllDatabaseList();
     }
 
-    // 1. Opanowane (5 kółek)
     function renderCompletedList() {
         const container = document.getElementById('completed-list');
         container.innerHTML = '';
@@ -356,7 +356,6 @@
         });
     }
 
-    // 2. W trakcie nauki (1..4 kółka)
     function renderInProgressList() {
         const container = document.getElementById('in-progress-list');
         container.innerHTML = '';
@@ -378,10 +377,11 @@
         });
     }
 
-    // 3. Pełna baza z filtrami
     function renderAllDatabaseList() {
         const container = document.getElementById('database-list');
         container.innerHTML = '';
+
+        if (spellsDB.length === 0) return;
 
         const catFilter = document.getElementById('filter-category').value;
         const typeFilter = document.getElementById('filter-type').value;
@@ -415,7 +415,7 @@
     function selectSpell(name) {
         selectedSpellName = name;
         if (!profileProgress[name]) {
-            profileProgress[name] = 0; // Inicjalizacja nauki
+            profileProgress[name] = 0;
         }
         saveCurrentProfile();
         renderAllSections();
@@ -426,7 +426,6 @@
         const typeFilter = document.getElementById('filter-type').value;
         const searchVal = document.getElementById('search-input').value.toLowerCase();
 
-        // Losujemy tylko spośród tych, które nie są jeszcze gotowe (mniej niż 5 kółek)
         const candidates = spellsDB.filter(s => {
             if ((profileProgress[s.name] || 0) >= 5) return false;
             if (catFilter !== 'ALL' && s.category !== catFilter) return false;
@@ -484,4 +483,91 @@
         for(let i=0; i<5; i++) cStr += (i < circles) ? '🟢 ' : '⚪ ';
         document.getElementById('circles-box').innerText = cStr;
 
-        const countCompleted = Object.values(profileP
+        const countCompleted = Object.values(profileProgress).filter(v => v >= 5).length;
+        document.getElementById('counter-display').innerText = `${document.getElementById('char-name').value} | Opanowano: ${countCompleted} / ${spellsDB.length}`;
+    }
+
+    function manualAddCircle() {
+        if (!selectedSpellName) return;
+        let c = profileProgress[selectedSpellName] || 0;
+        if (c < 5) {
+            profileProgress[selectedSpellName] = c + 1;
+            saveCurrentProfile();
+            updateGrimoireUI();
+            logConsole(`➕ Ręcznie dodano 1 kółko do: ${selectedSpellName}`);
+        }
+    }
+
+    function manualAddXP() {
+        let xpInput = prompt("Ile punktów XP zdobyłeś na lekcji?", "10");
+        if (xpInput !== null && !isNaN(xpInput)) {
+            let addXp = parseInt(xpInput);
+            let currentXp = parseInt(document.getElementById('xp-val').value) + addXp;
+            document.getElementById('xp-val').value = currentXp;
+            saveCurrentProfile();
+            logConsole(`✨ Dodano ${addXp} XP z lekcji! Aktualnie: ${currentXp} XP`);
+            alert(`Przyznano ${addXp} punktów XP!`);
+        }
+    }
+
+    function executeRoll() {
+        if (!selectedSpellName) return;
+        let circles = profileProgress[selectedSpellName] || 0;
+        if (circles >= 5) {
+            alert('Ta umiejętność jest już w pełni opanowana!');
+            return;
+        }
+
+        const spellObj = spellsDB.find(s => s.name === selectedSpellName) || { type: 'UTL', threshold: 10 };
+
+        const stats = {
+            off: parseInt(document.getElementById('off-val').value),
+            def: parseInt(document.getElementById('def-val').value),
+            utl: parseInt(document.getElementById('utl-val').value),
+            int: parseInt(document.getElementById('int-val').value)
+        };
+
+        const diceCount = stats[spellObj.type.toLowerCase()] || 3;
+        
+        let successes = 0;
+        let rolls = [];
+        for(let i=0; i<diceCount; i++) {
+            let r = Math.floor(Math.random() * 100) + 1;
+            rolls.push(r);
+            if (r >= spellObj.threshold) successes++;
+        }
+
+        const newCircles = Math.min(5, circles + successes);
+        profileProgress[selectedSpellName] = newCircles;
+        saveCurrentProfile();
+
+        updateGrimoireUI();
+
+        const discordCmd = `/r ${diceCount}d100>>${spellObj.threshold-1} ${selectedSpellName}`;
+        logConsole(`► ROLL ${selectedSpellName} (${diceCount}D100): [${rolls.join(', ')}]\n   Sukcesy: +${successes} Kółko | Discord: ${discordCmd}`);
+
+        if (newCircles >= 5) {
+            setTimeout(() => alert(`🎉 Opanowałeś umiejętność: ${selectedSpellName}!`), 100);
+        }
+    }
+
+    function logConsole(msg) {
+        const consoleBox = document.getElementById('console-output');
+        consoleBox.innerText = msg + '\n\n' + consoleBox.innerText;
+    }
+
+    function exportProfile() {
+        saveCurrentProfile();
+        const data = localStorage.getItem(getProfileKey());
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${document.getElementById('char-name').value.replace(/\s+/g, '_')}_profil.json`;
+        a.click();
+    }
+
+    window.onload = loadDatabase;
+</script>
+</body>
+</html>

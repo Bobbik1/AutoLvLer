@@ -1,0 +1,18 @@
+[
+  {"name": "Alohomora", "desc": "zaklęcie otwierające zamki", "category": "1 rok", "type": "UTL", "threshold": 10},
+  {"name": "Atramento", "desc": "zaklęcie zamieniające wodę w atrament", "category": "1 rok", "type": "UTL", "threshold": 10},
+  {"name": "Aqua Portam", "desc": "zaklęcie służące do otwierania Wrót Castellany", "category": "1 rok", "type": "UTL", "threshold": 10},
+  {"name": "Calvorio", "desc": "urok, który powoduje wyłysienie ofiary", "category": "1 rok", "type": "OFF", "threshold": 10},
+  {"name": "Colloportus", "desc": "zaklęcie, które służy do zamykania zamków drzwi, okien itd.", "category": "1 rok", "type": "UTL", "threshold": 10},
+  {"name": "Crinus Muto", "desc": "zmienia kolor włosów osoby, na którą zostanie rzucone", "category": "1 rok", "type": "UTL", "threshold": 10},
+  {"name": "Diffindo", "desc": "zaklęcie, które rozdziera, przecina lub fizycznie uszkadza cel", "category": "1 rok", "type": "OFF", "threshold": 10},
+  {"name": "Flipendo", "desc": "służy do popychania celów, zaś słabszych przeciwników powala", "category": "1 rok", "type": "OFF", "threshold": 10},
+  {"name": "Freshmefy", "desc": "zaklecie natychmiastowego odświeżenia oddechu", "category": "1 rok", "type": "UTL", "threshold": 10},
+  {"name": "Funemtie", "desc": "zaklęcie służące do związywania sznurówek ofiary", "category": "1 rok", "type": "OFF", "threshold": 10},
+  {"name": "Incendio", "desc": "zaklęcie, którym wyczarowuje się ogień", "category": "1 rok", "type": "OFF", "threshold": 10},
+  {"name": "Lacarnum Inflamari", "desc": "zaklęcie, które powoduje, że z końca różdżki wystrzeliwuje mała kula ognia", "category": "1 rok", "type": "OFF", "threshold": 10},
+  {"name": "Locomotor", "desc": "proste zaklęcie służące do przenoszenia różnych przedmiotów", "category": "1 rok", "type": "UTL", "threshold": 10},
+  {"name": "Amortencja", "desc": "najsilniejszy eliksir miłosny na świecie", "category": "eliksiry", "type": "INT", "threshold": 10},
+  {"name": "Eliksir Wielosokowy", "desc": "eliksir, który zamienia osobę pijącą w kogoś zupełnie innego", "category": "eliksiry", "type": "INT", "threshold": 10},
+  {"name": "Felix Felicis", "desc": "eliksir znany także jako Płynne Szczęście", "category": "eliksiry", "type": "INT", "threshold": 10}
+]

@@ -32,11 +32,12 @@
             padding: 20px;
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
         }
-        h1, h2 {
+        h1, h2, h3 {
             font-family: 'Cinzel', serif;
             color: var(--gold);
             text-align: center;
             margin-top: 5px;
+            margin-bottom: 10px;
         }
         .profile-selector {
             display: flex;
@@ -81,6 +82,11 @@
             border-radius: 6px; cursor: pointer; width: 100%; transition: all 0.2s ease; margin-top: 5px;
         }
         .btn:hover { background: var(--gold-bright); box-shadow: 0 0 10px var(--gold-bright); }
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 0.85em;
+            width: auto;
+        }
         .spell-card {
             background: rgba(0,0,0,0.4); border: 1px solid var(--gold);
             border-radius: 10px; padding: 20px; text-align: center; margin-top: 15px;
@@ -91,18 +97,48 @@
             padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 0.9em;
             white-space: pre-wrap; max-height: 150px; overflow-y: auto; border: 1px solid #333;
         }
-        .search-box {
+        .search-box, .select-box {
             width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box;
             background: var(--parchment); border: 1px solid var(--gold); border-radius: 4px;
+            font-family: 'Georgia', serif;
         }
-        .checkbox-list {
-            max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.3);
-            border: 1px solid var(--gold); padding: 10px; border-radius: 6px;
+        .filter-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
         }
-        .checkbox-item { display: flex; align-items: center; margin-bottom: 6px; font-size: 0.9em; }
-        .checkbox-item input { margin-right: 10px; }
+        .section-box {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--gold);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .list-container {
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .item-row {
+            display: flex;
+            align-items: center;
+            padding: 4px 0;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+            font-size: 0.9em;
+        }
+        .item-row input[type="radio"] {
+            margin-right: 10px;
+        }
         .manual-controls { display: flex; gap: 10px; margin-top: 10px; }
         .hidden { display: none; }
+        .badge {
+            background: var(--gold);
+            color: var(--bg-dark);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-right: 8px;
+        }
     </style>
 </head>
 <body>
@@ -110,6 +146,7 @@
 <div class="container">
     <h1>🧙‍♂️ Magiczny Grimoire</h1>
 
+    <!-- WYBÓR PROFILU -->
     <div class="profile-selector" id="profile-selector">
         <button class="profile-btn active" onclick="switchProfile(0)">Postać 1</button>
         <button class="profile-btn" onclick="switchProfile(1)">Postać 2</button>
@@ -117,8 +154,9 @@
         <button class="profile-btn" onclick="switchProfile(3)">Postać 4</button>
     </div>
 
+    <!-- EKRAN 1: KONFIGURACJA I SELEKCJA -->
     <div id="setup-screen">
-        <h2>🔮 Konfiguracja Czarodzieja</h2>
+        <h2>🔮 Konfiguracja Postaci</h2>
         <div style="margin-bottom: 10px;">
             <label style="color: var(--gold); font-size: 0.9em;">Imię Postaci:</label>
             <input type="text" id="char-name" class="search-box" value="Nicolaus Saltzenfast">
@@ -131,14 +169,48 @@
             <div class="stat-box"><label>INT</label><input type="number" id="int-val" value="3"></div>
         </div>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
             <div style="flex: 1;"><label style="color: var(--gold); font-size: 0.85em;">Punkty XP:</label><input type="number" id="xp-val" class="search-box" value="120"></div>
             <div style="flex: 1;"><label style="color: var(--gold); font-size: 0.85em;">Poziom (LVL):</label><input type="number" id="lvl-val" class="search-box" value="10"></div>
         </div>
 
-        <h2>📜 Opanowane Umiejętności</h2>
-        <input type="text" id="search-input" class="search-box" placeholder="Szukaj umiejętności..." oninput="filterSpells()">
-        <div id="checkboxes-container" class="checkbox-list">Ładowanie bazy zaklęć...</div>
+        <!-- SEKCJA 1: OPANOWANE UMIEJĘTNOŚCI -->
+        <div class="section-box">
+            <h3>📜 Opanowane Umiejętności (5/5 Kółek)</h3>
+            <div id="completed-list" class="list-container">Brak opanowanych umiejętności.</div>
+        </div>
+
+        <!-- SEKCJA 2: W TRAKCIE NAUKI -->
+        <div class="section-box">
+            <h3>⏳ W Trakcie Nauki</h3>
+            <div id="in-progress-list" class="list-container">Brak aktywnych badań/nauki.</div>
+        </div>
+
+        <!-- SEKCJA 3: BAZA WSZYSTKICH UMIEJĘTNOŚCI Z FILTRAMI -->
+        <div class="section-box">
+            <h3>📚 Baza Umiejętności</h3>
+            
+            <div class="filter-row">
+                <select id="filter-category" class="select-box" onchange="renderAllDatabaseList()">
+                    <option value="ALL">-- Wszystkie lata i kategorie --</option>
+                </select>
+
+                <select id="filter-type" class="select-box" onchange="renderAllDatabaseList()">
+                    <option value="ALL">-- Wszystkie typy (OFF/DEF/UTL/INT) --</option>
+                    <option value="OFF">OFF (Ofensywne)</option>
+                    <option value="DEF">DEF (Defensywne)</option>
+                    <option value="UTL">UTL (Użytkowe)</option>
+                    <option value="INT">INT (Inteligencja/Eliksiry)</option>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                <input type="text" id="search-input" class="search-box" placeholder="Szukaj po nazwie..." oninput="renderAllDatabaseList()" style="margin-bottom:0;">
+                <button class="btn btn-small" onclick="drawFilteredRandom()">🎲 Losuj z filtrów</button>
+            </div>
+
+            <div id="database-list" class="list-container">Ładowanie bazy danych...</div>
+        </div>
 
         <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button class="btn" onclick="startGrimoire()">📖 OTWÓRZ GRIMOIRE ➔</button>
@@ -146,8 +218,9 @@
         </div>
     </div>
 
+    <!-- EKRAN 2: GRIMOIRE -->
     <div id="grimoire-screen" class="hidden">
-        <button class="btn" style="width: auto; float: left; padding: 5px 12px;" onclick="showSetup()">⚙️ Ustawienia / Profil</button>
+        <button class="btn" style="width: auto; float: left; padding: 5px 12px;" onclick="showSetup()">⚙️ Powrót do Profilu</button>
         <span id="counter-display" style="float: right; color: var(--gold); font-size: 0.9em; margin-top: 5px;"></span>
         <div style="clear: both;"></div>
 
@@ -156,8 +229,6 @@
             <div id="spell-info" style="color: var(--gold); font-size: 0.9em; margin-bottom: 10px;"></div>
             <div id="spell-desc" style="font-style: italic; font-size: 0.95em;">-</div>
             <div class="circles-display" id="circles-box">⚪ ⚪ ⚪ ⚪ ⚪</div>
-            
-            <button class="btn" onclick="pickRandomSpell()">🎲 LOSUJ NOWĄ UMIEJĘTNOŚĆ</button>
             
             <div class="manual-controls">
                 <button class="btn" style="background: var(--green-success); color: #fff;" onclick="manualAddCircle()">➕ Dodaj Kółko Ręcznie</button>
@@ -174,33 +245,50 @@
 <script>
     let currentProfileIndex = 0;
     let spellsDB = [];
-    let knownSpells = new Set();
-    let activeSpell = null;
-    let circles = 0;
+    
+    // Słownik postępu czarów dla profilu: { "NazwaCzaru": liczbaKółek (1..5) }
+    let profileProgress = {}; 
+    let selectedSpellName = null;
 
     async function loadDatabase() {
         try {
             const response = await fetch('spells.json');
             spellsDB = await response.json();
-            knownSpells = loadProfileData();
-            renderCheckboxes();
-            updateCounter();
+            
+            populateCategoryFilter();
+            loadProfileData();
+            renderAllSections();
         } catch (e) {
-            console.error("Błąd ładowania bazy zaklęć:", e);
-            document.getElementById('checkboxes-container').innerHTML = "Błąd wczytywania pliku spells.json!";
+            console.error("Błąd ładowania spells.json:", e);
+            document.getElementById('database-list').innerText = "Błąd wczytywania bazy z pliku spells.json!";
         }
+    }
+
+    function populateCategoryFilter() {
+        const catSelect = document.getElementById('filter-category');
+        const categories = new Set();
+        spellsDB.forEach(s => { if(s.category) categories.add(s.category); });
+
+        // Dodaj unikaty z pliku do listy rozwijalnej
+        categories.forEach(cat => {
+            const opt = document.createElement('option');
+            opt.value = cat;
+            opt.innerText = cat.toUpperCase();
+            catSelect.appendChild(opt);
+        });
     }
 
     function getProfileKey() { return `hp_profile_${currentProfileIndex}`; }
 
     function loadProfileData() {
-        const data = JSON.parse(localStorage.getItem(getProfileKey()) || JSON.stringify({
+        const raw = localStorage.getItem(getProfileKey());
+        const data = raw ? JSON.parse(raw) : {
             name: currentProfileIndex === 0 ? "Nicolaus Saltzenfast" : `Postać ${currentProfileIndex + 1}`,
             stats: {off: 2, def: 1, utl: 3, int: 3},
             xp: 120,
             lvl: 10,
-            knownSpells: []
-        }));
+            progress: {}
+        };
 
         document.getElementById('char-name').value = data.name;
         document.getElementById('off-val').value = data.stats.off;
@@ -210,21 +298,8 @@
         document.getElementById('xp-val').value = data.xp;
         document.getElementById('lvl-val').value = data.lvl;
 
-        return new Set(data.knownSpells);
-    }
-
-    function switchProfile(index) {
-        saveCurrentProfile();
-        currentProfileIndex = index;
-        
-        const buttons = document.querySelectorAll('.profile-btn');
-        buttons.forEach((btn, idx) => {
-            if(idx === index) btn.classList.add('active');
-            else btn.classList.remove('active');
-        });
-
-        knownSpells = loadProfileData();
-        renderCheckboxes();
+        profileProgress = data.progress || {};
+        selectedSpellName = data.selectedSpell || null;
     }
 
     function saveCurrentProfile() {
@@ -238,158 +313,175 @@
             },
             xp: parseInt(document.getElementById('xp-val').value),
             lvl: parseInt(document.getElementById('lvl-val').value),
-            knownSpells: [...knownSpells]
+            progress: profileProgress,
+            selectedSpell: selectedSpellName
         };
         localStorage.setItem(getProfileKey(), JSON.stringify(data));
     }
 
-    function exportProfile() {
+    function switchProfile(index) {
         saveCurrentProfile();
-        const data = localStorage.getItem(getProfileKey());
-        const blob = new Blob([data], {type: 'application/json'});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${document.getElementById('char-name').value.replace(/\s+/g, '_')}_profil.json`;
-        a.click();
+        currentProfileIndex = index;
+        
+        document.querySelectorAll('.profile-btn').forEach((btn, idx) => {
+            btn.classList.toggle('active', idx === index);
+        });
+
+        loadProfileData();
+        renderAllSections();
     }
 
-    function renderCheckboxes() {
-        const container = document.getElementById('checkboxes-container');
-        const search = document.getElementById('search-input').value.toLowerCase();
+    function renderAllSections() {
+        renderCompletedList();
+        renderInProgressList();
+        renderAllDatabaseList();
+    }
+
+    // 1. Opanowane (5 kółek)
+    function renderCompletedList() {
+        const container = document.getElementById('completed-list');
         container.innerHTML = '';
+        
+        const completed = Object.keys(profileProgress).filter(name => profileProgress[name] >= 5);
+        if (completed.length === 0) {
+            container.innerText = 'Brak opanowanych umiejętności.';
+            return;
+        }
 
-        spellsDB.forEach(sp => {
-            if (search && !sp.name.toLowerCase().includes(search)) return;
-
+        completed.forEach(name => {
             const div = document.createElement('div');
-            div.className = 'checkbox-item';
-            const isChecked = knownSpells.has(sp.name) ? 'checked' : '';
-            div.innerHTML = `<input type="checkbox" id="cb-${sp.name}" value="${sp.name}" ${isChecked} onchange="toggleSpell('${sp.name}')">
-                             <label for="cb-${sp.name}">[${sp.category.toUpperCase()}] <b>${sp.name}</b> (${sp.type})</label>`;
+            div.className = 'item-row';
+            div.innerHTML = `<span class="badge">5/5 🟢</span> <b>${name}</b>`;
             container.appendChild(div);
         });
     }
 
-    function toggleSpell(name) {
-        if (knownSpells.has(name)) knownSpells.delete(name);
-        else knownSpells.add(name);
-        saveCurrentProfile();
+    // 2. W trakcie nauki (1..4 kółka)
+    function renderInProgressList() {
+        const container = document.getElementById('in-progress-list');
+        container.innerHTML = '';
+
+        const inProgress = Object.keys(profileProgress).filter(name => profileProgress[name] > 0 && profileProgress[name] < 5);
+        if (inProgress.length === 0) {
+            container.innerText = 'Brak umiejętności w trakcie nauki.';
+            return;
+        }
+
+        inProgress.forEach(name => {
+            const circles = profileProgress[name];
+            const div = document.createElement('div');
+            div.className = 'item-row';
+            const isChecked = (selectedSpellName === name) ? 'checked' : '';
+            div.innerHTML = `<input type="radio" name="spell-select" value="${name}" ${isChecked} onchange="selectSpell('${name}')">
+                             <span class="badge">${circles}/5 🟡</span> <b>${name}</b>`;
+            container.appendChild(div);
+        });
     }
 
-    function filterSpells() { renderCheckboxes(); }
+    // 3. Pełna baza z filtrami
+    function renderAllDatabaseList() {
+        const container = document.getElementById('database-list');
+        container.innerHTML = '';
+
+        const catFilter = document.getElementById('filter-category').value;
+        const typeFilter = document.getElementById('filter-type').value;
+        const searchVal = document.getElementById('search-input').value.toLowerCase();
+
+        const filtered = spellsDB.filter(s => {
+            if (catFilter !== 'ALL' && s.category !== catFilter) return false;
+            if (typeFilter !== 'ALL' && s.type !== typeFilter) return false;
+            if (searchVal && !s.name.toLowerCase().includes(searchVal)) return false;
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            container.innerText = 'Brak umiejętności spełniających kryteria filtrów.';
+            return;
+        }
+
+        filtered.forEach(s => {
+            const currentCircles = profileProgress[s.name] || 0;
+            const div = document.createElement('div');
+            div.className = 'item-row';
+            const isChecked = (selectedSpellName === s.name) ? 'checked' : '';
+            
+            div.innerHTML = `<input type="radio" name="spell-select" value="${s.name}" ${isChecked} onchange="selectSpell('${s.name}')">
+                             <span class="badge">${currentCircles}/5 ${currentCircles === 5 ? '🟢' : '⚪'}</span>
+                             <span>[${s.category.toUpperCase()}] <b>${s.name}</b> (${s.type})</span>`;
+            container.appendChild(div);
+        });
+    }
+
+    function selectSpell(name) {
+        selectedSpellName = name;
+        if (!profileProgress[name]) {
+            profileProgress[name] = 0; // Inicjalizacja nauki
+        }
+        saveCurrentProfile();
+        renderAllSections();
+    }
+
+    function drawFilteredRandom() {
+        const catFilter = document.getElementById('filter-category').value;
+        const typeFilter = document.getElementById('filter-type').value;
+        const searchVal = document.getElementById('search-input').value.toLowerCase();
+
+        // Losujemy tylko spośród tych, które nie są jeszcze gotowe (mniej niż 5 kółek)
+        const candidates = spellsDB.filter(s => {
+            if ((profileProgress[s.name] || 0) >= 5) return false;
+            if (catFilter !== 'ALL' && s.category !== catFilter) return false;
+            if (typeFilter !== 'ALL' && s.type !== typeFilter) return false;
+            if (searchVal && !s.name.toLowerCase().includes(searchVal)) return false;
+            return true;
+        });
+
+        if (candidates.length === 0) {
+            alert('Brak nieopanowanych umiejętności pasujących do ustawionych filtrów!');
+            return;
+        }
+
+        const picked = candidates[Math.floor(Math.random() * candidates.length)];
+        selectSpell(picked.name);
+        alert(`🎲 Wylosowano umiejętność: ${picked.name} [${picked.category.toUpperCase()}]`);
+    }
 
     function startGrimoire() {
+        if (!selectedSpellName) {
+            alert('Wybierz jedną umiejętność z listy (zaznacz kropkę), aby otworzyć Grimoire!');
+            return;
+        }
+
         saveCurrentProfile();
         document.getElementById('setup-screen').classList.add('hidden');
         document.getElementById('grimoire-screen').classList.remove('hidden');
-        updateCounter();
-        if (!activeSpell) pickRandomSpell();
+        
+        updateGrimoireUI();
     }
 
     function showSetup() {
         document.getElementById('grimoire-screen').classList.add('hidden');
         document.getElementById('setup-screen').classList.remove('hidden');
         loadProfileData();
-        renderCheckboxes();
+        renderAllSections();
     }
 
-    function updateCounter() {
-        document.getElementById('counter-display').innerText = `${document.getElementById('char-name').value} | Opanowano: ${knownSpells.size} / ${spellsDB.length}`;
-    }
+    function updateGrimoireUI() {
+        const spellObj = spellsDB.find(s => s.name === selectedSpellName) || {
+            name: selectedSpellName,
+            category: 'Inne',
+            type: 'UTL',
+            threshold: 10,
+            desc: ''
+        };
 
-    function pickRandomSpell() {
-        const avail = spellsDB.filter(s => !knownSpells.has(s.name));
-        if (avail.length === 0) {
-            alert('🎉 Gratulacje! Opanowałeś wszystkie umiejętności z bazy!');
-            return;
-        }
-        activeSpell = avail[Math.floor(Math.random() * avail.length)];
-        circles = 0;
-        updateCardUI();
-        logConsole(`🔮 Rozpoczęto naukę: ${activeSpell.name}`);
-    }
+        const circles = profileProgress[selectedSpellName] || 0;
 
-    function updateCardUI() {
-        document.getElementById('spell-title').innerText = `${activeSpell.name} [${activeSpell.category.toUpperCase()}]`;
-        document.getElementById('spell-info').innerText = `Typ: ${activeSpell.type} | Próg Sukcesu: >= ${activeSpell.threshold}`;
-        document.getElementById('spell-desc').innerText = activeSpell.desc || 'Brak opisu.';
-        
+        document.getElementById('spell-title').innerText = `${spellObj.name} [${spellObj.category.toUpperCase()}]`;
+        document.getElementById('spell-info').innerText = `Typ: ${spellObj.type} | Próg Sukcesu: >= ${spellObj.threshold}`;
+        document.getElementById('spell-desc').innerText = spellObj.desc || 'Brak opisu.';
+
         let cStr = '';
         for(let i=0; i<5; i++) cStr += (i < circles) ? '🟢 ' : '⚪ ';
         document.getElementById('circles-box').innerText = cStr;
-    }
 
-    function manualAddCircle() {
-        if (!activeSpell) return;
-        if (circles < 5) {
-            circles++;
-            updateCardUI();
-            logConsole(`➕ Ręcznie dodano 1 kółko do ${activeSpell.name}`);
-            checkSpellCompletion();
-        }
-    }
-
-    function manualAddXP() {
-        let xpInput = prompt("Ile punktów XP zdobyłeś na lekcji?", "10");
-        if (xpInput !== null && !isNaN(xpInput)) {
-            let addXp = parseInt(xpInput);
-            let currentXp = parseInt(document.getElementById('xp-val').value) + addXp;
-            document.getElementById('xp-val').value = currentXp;
-            saveCurrentProfile();
-            logConsole(`✨ Dodano ${addXp} XP z lekcji! Aktualnie: ${currentXp} XP`);
-            alert(`Przyznano ${addXp} punktów XP!`);
-        }
-    }
-
-    function executeRoll() {
-        if (!activeSpell) return;
-        if (circles >= 5) {
-            alert('Ta umiejętność jest już w pełni opanowana!');
-            return;
-        }
-        
-        const stats = {
-            off: parseInt(document.getElementById('off-val').value),
-            def: parseInt(document.getElementById('def-val').value),
-            utl: parseInt(document.getElementById('utl-val').value),
-            int: parseInt(document.getElementById('int-val').value)
-        };
-        
-        const diceCount = stats[activeSpell.type.toLowerCase()] || 3;
-        
-        let successes = 0;
-        let rolls = [];
-        for(let i=0; i<diceCount; i++) {
-            let r = Math.floor(Math.random() * 100) + 1;
-            rolls.push(r);
-            if (r >= activeSpell.threshold) successes++;
-        }
-
-        circles = Math.min(5, circles + successes);
-        updateCardUI();
-
-        const discordCmd = `/r ${diceCount}d100>>${activeSpell.threshold-1} ${activeSpell.name}`;
-        logConsole(`► ROLL ${activeSpell.name} (${diceCount}D100): [${rolls.join(', ')}]\n   Sukcesy: +${successes} Kółko | Discord: ${discordCmd}`);
-
-        checkSpellCompletion();
-    }
-
-    function checkSpellCompletion() {
-        if (circles >= 5) {
-            knownSpells.add(activeSpell.name);
-            saveCurrentProfile();
-            updateCounter();
-            setTimeout(() => alert(`🎉 Opanowałeś umiejętność: ${activeSpell.name}!`), 100);
-        }
-    }
-
-    function logConsole(msg) {
-        const consoleBox = document.getElementById('console-output');
-        consoleBox.innerText = msg + '\n\n' + consoleBox.innerText;
-    }
-
-    window.onload = loadDatabase;
-</script>
-</body>
-</html>
+        const countCompleted = Object.values(profileP

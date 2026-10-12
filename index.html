@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Magiczny Grimoire - Potter RP</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Georgia&family=MedievalSharp&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Georgia&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-dark: #121019;
@@ -12,7 +12,6 @@
             --gold: #d4af37;
             --gold-bright: #ffdf00;
             --parchment: #f4e8c1;
-            --green-success: #2e7d32;
         }
 
         body {
@@ -40,6 +39,29 @@
             color: var(--gold);
             text-align: center;
             margin-top: 5px;
+        }
+
+        .profile-selector {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 15px;
+        }
+
+        .profile-btn {
+            background: #1a1624;
+            color: var(--parchment);
+            border: 1px solid var(--gold);
+            padding: 6px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-family: 'Cinzel', serif;
+        }
+
+        .profile-btn.active {
+            background: var(--gold);
+            color: var(--bg-dark);
+            font-weight: bold;
         }
 
         .stats-grid {
@@ -86,6 +108,7 @@
             cursor: pointer;
             width: 100%;
             transition: all 0.2s ease;
+            margin-top: 5px;
         }
 
         .btn:hover {
@@ -133,7 +156,7 @@
         }
 
         .checkbox-list {
-            max-height: 300px;
+            max-height: 250px;
             overflow-y: auto;
             background: rgba(0,0,0,0.3);
             border: 1px solid var(--gold);
@@ -152,6 +175,12 @@
             margin-right: 10px;
         }
 
+        .manual-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
         .hidden { display: none; }
     </style>
 </head>
@@ -160,9 +189,22 @@
 <div class="container">
     <h1>🧙‍♂️ Magiczny Grimoire</h1>
 
+    <!-- Wybór Profilu (1-4) -->
+    <div class="profile-selector" id="profile-selector">
+        <button class="profile-btn active" onclick="switchProfile(0)">Postać 1</button>
+        <button class="profile-btn" onclick="switchProfile(1)">Postać 2</button>
+        <button class="profile-btn" onclick="switchProfile(2)">Postać 3</button>
+        <button class="profile-btn" onclick="switchProfile(3)">Postać 4</button>
+    </div>
+
     <!-- EKRAN 1: SETUP -->
     <div id="setup-screen">
         <h2>🔮 Konfiguracja Czarodzieja</h2>
+        <div style="margin-bottom: 10px;">
+            <label style="color: var(--gold); font-size: 0.9em;">Imię Postaci:</label>
+            <input type="text" id="char-name" class="search-box" value="Nicolaus Saltzenfast">
+        </div>
+
         <div class="stats-grid">
             <div class="stat-box"><label>OFF</label><input type="number" id="off-val" value="2"></div>
             <div class="stat-box"><label>DEF</label><input type="number" id="def-val" value="1"></div>
@@ -170,16 +212,24 @@
             <div class="stat-box"><label>INT</label><input type="number" id="int-val" value="3"></div>
         </div>
 
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <div style="flex: 1;"><label style="color: var(--gold); font-size: 0.85em;">Punkty XP:</label><input type="number" id="xp-val" class="search-box" value="120"></div>
+            <div style="flex: 1;"><label style="color: var(--gold); font-size: 0.85em;">Poziom (LVL):</label><input type="number" id="lvl-val" class="search-box" value="10"></div>
+        </div>
+
         <h2>📜 Opanowane Umiejętności</h2>
         <input type="text" id="search-input" class="search-box" placeholder="Szukaj umiejętności..." oninput="filterSpells()">
-        <div id="checkboxes-container" class="checkbox-list"></div>
+        <div id="checkboxes-container" class="checkbox-list">Ładowanie bazy 504 umiejętności...</div>
 
-        <button class="btn" style="margin-top: 15px;" onclick="startGrimoire()">📖 OTWÓRZ GRIMOIRE ➔</button>
+        <div style="display: flex; gap: 10px; margin-top: 15px;">
+            <button class="btn" onclick="startGrimoire()">📖 OTWÓRZ GRIMOIRE ➔</button>
+            <button class="btn" style="background: #333; color: var(--gold); border: 1px solid var(--gold);" onclick="exportProfile()">💾 Eksportuj Profil</button>
+        </div>
     </div>
 
     <!-- EKRAN 2: GRIMOIRE -->
     <div id="grimoire-screen" class="hidden">
-        <button class="btn" style="width: auto; float: left; padding: 5px 12px;" onclick="showSetup()">⚙️ Profil</button>
+        <button class="btn" style="width: auto; float: left; padding: 5px 12px;" onclick="showSetup()">⚙️ Ustawienia / Profil</button>
         <span id="counter-display" style="float: right; color: var(--gold); font-size: 0.9em; margin-top: 5px;"></span>
         <div style="clear: both;"></div>
 
@@ -188,7 +238,13 @@
             <div id="spell-info" style="color: var(--gold); font-size: 0.9em; margin-bottom: 10px;"></div>
             <div id="spell-desc" style="font-style: italic; font-size: 0.95em;">-</div>
             <div class="circles-display" id="circles-box">⚪ ⚪ ⚪ ⚪ ⚪</div>
+            
             <button class="btn" onclick="pickRandomSpell()">🎲 LOSUJ NOWĄ UMIEJĘTNOŚĆ</button>
+            
+            <div class="manual-controls">
+                <button class="btn" style="background: #2e7d32; color: #fff;" onclick="manualAddCircle()">➕ Dodaj Kółko Ręcznie</button>
+                <button class="btn" style="background: #1565c0; color: #fff;" onclick="manualAddXP()">✨ Dodaj XP z Lekcji</button>
+            </div>
         </div>
 
         <button class="btn" style="margin-top: 15px; background: linear-gradient(135deg, #00b09b, #96c93d);" onclick="executeRoll()">✨ WYKONAJ ROLL (ROLL IC) ✨</button>
@@ -198,43 +254,87 @@
 </div>
 
 <script>
-    // Wbudowane bazy z pliku Umiałki.xlsx wczytane z serwera
+    let currentProfileIndex = 0;
     let spellsDB = [];
-    let knownSpells = new Set(JSON.parse(localStorage.getItem('knownSpells') || '[]'));
     let activeSpell = null;
     let circles = 0;
+    let knownSpells = new Set();
 
-    // Załaduj dane przy starcie
-    fetch('https://raw.githubusercontent.com/datasets/potter-spells/main/spells.json') // Fallback/Placeholder
-    .catch(() => {});
+    async function initApp() {
+        try {
+            const response = await fetch('spells.json');
+            spellsDB = await response.json();
+            loadProfileData();
+            renderCheckboxes();
+        } catch (e) {
+            console.error("Błąd ładowania bazy zaklęć:", e);
+            document.getElementById('checkboxes-container').innerHTML = "Błąd ładowania pliku spells.json!";
+        }
+    }
 
-    // Przykładowe wczytanie lokalne / domyślne danych
-    async function initData() {
-        const stats = JSON.parse(localStorage.getItem('charStats') || '{"off":2,"def":1,"utl":3,"int":3}');
-        document.getElementById('off-val').value = stats.off;
-        document.getElementById('def-val').value = stats.def;
-        document.getElementById('utl-val').value = stats.utl;
-        document.getElementById('int-val').value = stats.int;
+    function getProfileKey() {
+        return `hp_profile_${currentProfileIndex}`;
+    }
 
-        // Ładowanie pełnej listy z pliku xlsx w przeglądarce
-        loadDefaultDatabase();
+    function loadProfileData() {
+        const data = JSON.parse(localStorage.getItem(getProfileKey()) || JSON.stringify({
+            name: currentProfileIndex === 0 ? "Nicolaus Saltzenfast" : `Postać ${currentProfileIndex + 1}`,
+            stats: {off: 2, def: 1, utl: 3, int: 3},
+            xp: 120,
+            lvl: 10,
+            knownSpells: []
+        }));
+
+        document.getElementById('char-name').value = data.name;
+        document.getElementById('off-val').value = data.stats.off;
+        document.getElementById('def-val').value = data.stats.def;
+        document.getElementById('utl-val').value = data.stats.utl;
+        document.getElementById('int-val').value = data.stats.int;
+        document.getElementById('xp-val').value = data.xp;
+        document.getElementById('lvl-val').value = data.lvl;
+
+        knownSpells = new Set(data.knownSpells);
+    }
+
+    function switchProfile(index) {
+        saveCurrentProfile();
+        currentProfileIndex = index;
+        
+        const buttons = document.querySelectorAll('.profile-btn');
+        buttons.forEach((btn, idx) => {
+            if(idx === index) btn.classList.add('active');
+            else btn.classList.remove('active');
+        });
+
+        loadProfileData();
         renderCheckboxes();
     }
 
-    function loadDefaultDatabase() {
-        // Dane wygenerowane z pliku Umiałki.xlsx
-        spellsDB = [
-            {"name":"Alohomora","desc":"zaklęcie otwierające zamki","category":"1 rok","type":"UTL","threshold":10},
-            {"name":"Atramento","desc":"zaklęcie zamieniające wodę w atrament","category":"1 rok","type":"UTL","threshold":10},
-            {"name":"Calvorio","desc":"urok, który powoduje wyłysienie ofiary","category":"1 rok","type":"OFF","threshold":10},
-            {"name":"Aberto","desc":"zaklęcie otwierające drzwi i okna","category":"2 rok","type":"UTL","threshold":20},
-            {"name":"Acies","desc":"zaklęcie nadające przedmiotom połysk","category":"2 rok","type":"UTL","threshold":20},
-            {"name":"Anapneo","desc":"zaklęcie udrażniające drogi oddechowe","category":"2 rok","type":"DEF","threshold":20},
-            {"name":"Accio","desc":"zaklęcie przywołujące przedmioty","category":"4 rok","type":"UTL","threshold":50},
-            {"name":"Protego","desc":"tarczowa bariera obronna","category":"3 rok","type":"DEF","threshold":40},
-            {"name":"Incendio","desc":"zaklęcie wywołujące ogień","category":"1 rok","type":"OFF","threshold":10}
-            // Pełna lista 504 czarów zostanie załadowana z pliku JSON!
-        ];
+    function saveCurrentProfile() {
+        const data = {
+            name: document.getElementById('char-name').value,
+            stats: {
+                off: parseInt(document.getElementById('off-val').value),
+                def: parseInt(document.getElementById('def-val').value),
+                utl: parseInt(document.getElementById('utl-val').value),
+                int: parseInt(document.getElementById('int-val').value)
+            },
+            xp: parseInt(document.getElementById('xp-val').value),
+            lvl: parseInt(document.getElementById('lvl-val').value),
+            knownSpells: [...knownSpells]
+        };
+        localStorage.setItem(getProfileKey(), JSON.stringify(data));
+    }
+
+    function exportProfile() {
+        saveCurrentProfile();
+        const data = localStorage.getItem(getProfileKey());
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${document.getElementById('char-name').value.replace(/\s+/g, '_')}_profil.json`;
+        a.click();
     }
 
     function renderCheckboxes() {
@@ -257,13 +357,13 @@
     function toggleSpell(name) {
         if (knownSpells.has(name)) knownSpells.delete(name);
         else knownSpells.add(name);
-        localStorage.setItem('knownSpells', JSON.stringify([...knownSpells]));
+        saveCurrentProfile();
     }
 
     function filterSpells() { renderCheckboxes(); }
 
     function startGrimoire() {
-        saveStats();
+        saveCurrentProfile();
         document.getElementById('setup-screen').classList.add('hidden');
         document.getElementById('grimoire-screen').classList.remove('hidden');
         updateCounter();
@@ -273,26 +373,18 @@
     function showSetup() {
         document.getElementById('grimoire-screen').classList.add('hidden');
         document.getElementById('setup-screen').classList.remove('hidden');
-    }
-
-    function saveStats() {
-        const stats = {
-            off: parseInt(document.getElementById('off-val').value),
-            def: parseInt(document.getElementById('def-val').value),
-            utl: parseInt(document.getElementById('utl-val').value),
-            int: parseInt(document.getElementById('int-val').value)
-        };
-        localStorage.setItem('charStats', JSON.stringify(stats));
+        loadProfileData();
+        renderCheckboxes();
     }
 
     function updateCounter() {
-        document.getElementById('counter-display').innerText = `Opanowano: ${knownSpells.size} / ${spellsDB.length}`;
+        document.getElementById('counter-display').innerText = `${document.getElementById('char-name').value} | Opanowano: ${knownSpells.size} / ${spellsDB.length}`;
     }
 
     function pickRandomSpell() {
         const avail = spellsDB.filter(s => !knownSpells.has(s.name));
         if (avail.length === 0) {
-            alert('🎉 Gratukacje! Opanowałeś wszystkie umiejętności z bazy!');
+            alert('🎉 Gratulacje! Opanowałeś wszystkie umiejętności z bazy!');
             return;
         }
         activeSpell = avail[Math.floor(Math.random() * avail.length)];
@@ -311,9 +403,42 @@
         document.getElementById('circles-box').innerText = cStr;
     }
 
+    function manualAddCircle() {
+        if (!activeSpell) return;
+        if (circles < 5) {
+            circles++;
+            updateCardUI();
+            logConsole(`➕ Ręcznie dodano 1 kółko do ${activeSpell.name}`);
+            checkSpellCompletion();
+        }
+    }
+
+    function manualAddXP() {
+        let xpInput = prompt("Ile punktów XP zdobyłeś na lekcji?", "10");
+        if (xpInput !== null && !isNaN(xpInput)) {
+            let addXp = parseInt(xpInput);
+            let currentXp = parseInt(document.getElementById('xp-val').value) + addXp;
+            document.getElementById('xp-val').value = currentXp;
+            saveCurrentProfile();
+            logConsole(`✨ Dodano ${addXp} XP z lekcji! Aktualnie: ${currentXp} XP`);
+            alert(`Przyznano ${addXp} punktów XP!`);
+        }
+    }
+
     function executeRoll() {
         if (!activeSpell) return;
-        const stats = JSON.parse(localStorage.getItem('charStats'));
+        if (circles >= 5) {
+            alert('Ta umiejętność jest już w pełni opanowana!');
+            return;
+        }
+        
+        const stats = {
+            off: parseInt(document.getElementById('off-val').value),
+            def: parseInt(document.getElementById('def-val').value),
+            utl: parseInt(document.getElementById('utl-val').value),
+            int: parseInt(document.getElementById('int-val').value)
+        };
+        
         const diceCount = stats[activeSpell.type.toLowerCase()] || 3;
         
         let successes = 0;
@@ -330,9 +455,13 @@
         const discordCmd = `/r ${diceCount}d100>>${activeSpell.threshold-1} ${activeSpell.name}`;
         logConsole(`► ROLL ${activeSpell.name} (${diceCount}D100): [${rolls.join(', ')}]\n   Sukcesy: +${successes} Kółko | Discord: ${discordCmd}`);
 
+        checkSpellCompletion();
+    }
+
+    function checkSpellCompletion() {
         if (circles >= 5) {
             knownSpells.add(activeSpell.name);
-            localStorage.setItem('knownSpells', JSON.stringify([...knownSpells]));
+            saveCurrentProfile();
             updateCounter();
             setTimeout(() => alert(`🎉 Opanowałeś umiejętność: ${activeSpell.name}!`), 100);
         }
@@ -343,7 +472,7 @@
         consoleBox.innerText = msg + '\n\n' + consoleBox.innerText;
     }
 
-    window.onload = initData;
+    window.onload = initApp;
 </script>
 </body>
 </html>

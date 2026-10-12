@@ -12,8 +12,8 @@
             --gold: #d4af37;
             --gold-bright: #ffdf00;
             --parchment: #f4e8c1;
+            --green-success: #2e7d32;
         }
-
         body {
             background-color: var(--bg-dark);
             color: var(--parchment);
@@ -23,7 +23,6 @@
             display: flex;
             justify-content: center;
         }
-
         .container {
             width: 100%;
             max-width: 750px;
@@ -33,21 +32,18 @@
             padding: 20px;
             box-shadow: 0 0 20px rgba(212, 175, 55, 0.2);
         }
-
         h1, h2 {
             font-family: 'Cinzel', serif;
             color: var(--gold);
             text-align: center;
             margin-top: 5px;
         }
-
         .profile-selector {
             display: flex;
             justify-content: center;
             gap: 5px;
             margin-bottom: 15px;
         }
-
         .profile-btn {
             background: #1a1624;
             color: var(--parchment);
@@ -57,13 +53,11 @@
             border-radius: 4px;
             font-family: 'Cinzel', serif;
         }
-
         .profile-btn.active {
             background: var(--gold);
             color: var(--bg-dark);
             font-weight: bold;
         }
-
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -74,113 +68,40 @@
             border: 1px solid var(--gold);
             margin-bottom: 15px;
         }
-
-        .stat-box {
-            text-align: center;
-        }
-
-        .stat-box label {
-            display: block;
-            font-size: 0.85em;
-            color: var(--gold);
-            margin-bottom: 3px;
-        }
-
+        .stat-box { text-align: center; }
+        .stat-box label { display: block; font-size: 0.85em; color: var(--gold); margin-bottom: 3px; }
         .stat-box input {
-            width: 50px;
-            text-align: center;
-            background: var(--parchment);
-            border: 1px solid var(--gold);
-            border-radius: 4px;
-            font-weight: bold;
-            font-size: 1.1em;
+            width: 50px; text-align: center; background: var(--parchment);
+            border: 1px solid var(--gold); border-radius: 4px; font-weight: bold; font-size: 1.1em;
         }
-
         .btn {
             background: linear-gradient(135deg, #d4af37, #aa820a);
-            color: var(--bg-dark);
-            border: none;
-            padding: 10px 18px;
-            font-family: 'Cinzel', serif;
-            font-weight: bold;
-            font-size: 1em;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            transition: all 0.2s ease;
-            margin-top: 5px;
+            color: var(--bg-dark); border: none; padding: 10px 18px;
+            font-family: 'Cinzel', serif; font-weight: bold; font-size: 1em;
+            border-radius: 6px; cursor: pointer; width: 100%; transition: all 0.2s ease; margin-top: 5px;
         }
-
-        .btn:hover {
-            background: var(--gold-bright);
-            box-shadow: 0 0 10px var(--gold-bright);
-        }
-
+        .btn:hover { background: var(--gold-bright); box-shadow: 0 0 10px var(--gold-bright); }
         .spell-card {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid var(--gold);
-            border-radius: 10px;
-            padding: 20px;
-            text-align: center;
-            margin-top: 15px;
+            background: rgba(0,0,0,0.4); border: 1px solid var(--gold);
+            border-radius: 10px; padding: 20px; text-align: center; margin-top: 15px;
         }
-
-        .circles-display {
-            font-size: 1.8em;
-            letter-spacing: 5px;
-            margin: 15px 0;
-        }
-
+        .circles-display { font-size: 1.8em; letter-spacing: 5px; margin: 15px 0; }
         .console-box {
-            background: #000;
-            color: #00ff66;
-            font-family: monospace;
-            padding: 10px;
-            border-radius: 6px;
-            margin-top: 15px;
-            font-size: 0.9em;
-            white-space: pre-wrap;
-            max-height: 150px;
-            overflow-y: auto;
-            border: 1px solid #333;
+            background: #000; color: #00ff66; font-family: monospace;
+            padding: 10px; border-radius: 6px; margin-top: 15px; font-size: 0.9em;
+            white-space: pre-wrap; max-height: 150px; overflow-y: auto; border: 1px solid #333;
         }
-
         .search-box {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            box-sizing: border-box;
-            background: var(--parchment);
-            border: 1px solid var(--gold);
-            border-radius: 4px;
+            width: 100%; padding: 8px; margin-bottom: 10px; box-sizing: border-box;
+            background: var(--parchment); border: 1px solid var(--gold); border-radius: 4px;
         }
-
         .checkbox-list {
-            max-height: 250px;
-            overflow-y: auto;
-            background: rgba(0,0,0,0.3);
-            border: 1px solid var(--gold);
-            padding: 10px;
-            border-radius: 6px;
+            max-height: 250px; overflow-y: auto; background: rgba(0,0,0,0.3);
+            border: 1px solid var(--gold); padding: 10px; border-radius: 6px;
         }
-
-        .checkbox-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 6px;
-            font-size: 0.9em;
-        }
-
-        .checkbox-item input {
-            margin-right: 10px;
-        }
-
-        .manual-controls {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
+        .checkbox-item { display: flex; align-items: center; margin-bottom: 6px; font-size: 0.9em; }
+        .checkbox-item input { margin-right: 10px; }
+        .manual-controls { display: flex; gap: 10px; margin-top: 10px; }
         .hidden { display: none; }
     </style>
 </head>
@@ -189,7 +110,6 @@
 <div class="container">
     <h1>🧙‍♂️ Magiczny Grimoire</h1>
 
-    <!-- Wybór Profilu (1-4) -->
     <div class="profile-selector" id="profile-selector">
         <button class="profile-btn active" onclick="switchProfile(0)">Postać 1</button>
         <button class="profile-btn" onclick="switchProfile(1)">Postać 2</button>
@@ -197,7 +117,6 @@
         <button class="profile-btn" onclick="switchProfile(3)">Postać 4</button>
     </div>
 
-    <!-- EKRAN 1: SETUP -->
     <div id="setup-screen">
         <h2>🔮 Konfiguracja Czarodzieja</h2>
         <div style="margin-bottom: 10px;">
@@ -219,7 +138,7 @@
 
         <h2>📜 Opanowane Umiejętności</h2>
         <input type="text" id="search-input" class="search-box" placeholder="Szukaj umiejętności..." oninput="filterSpells()">
-        <div id="checkboxes-container" class="checkbox-list">Ładowanie bazy 504 umiejętności...</div>
+        <div id="checkboxes-container" class="checkbox-list">Ładowanie bazy zaklęć...</div>
 
         <div style="display: flex; gap: 10px; margin-top: 15px;">
             <button class="btn" onclick="startGrimoire()">📖 OTWÓRZ GRIMOIRE ➔</button>
@@ -227,7 +146,6 @@
         </div>
     </div>
 
-    <!-- EKRAN 2: GRIMOIRE -->
     <div id="grimoire-screen" class="hidden">
         <button class="btn" style="width: auto; float: left; padding: 5px 12px;" onclick="showSetup()">⚙️ Ustawienia / Profil</button>
         <span id="counter-display" style="float: right; color: var(--gold); font-size: 0.9em; margin-top: 5px;"></span>
@@ -242,7 +160,7 @@
             <button class="btn" onclick="pickRandomSpell()">🎲 LOSUJ NOWĄ UMIEJĘTNOŚĆ</button>
             
             <div class="manual-controls">
-                <button class="btn" style="background: #2e7d32; color: #fff;" onclick="manualAddCircle()">➕ Dodaj Kółko Ręcznie</button>
+                <button class="btn" style="background: var(--green-success); color: #fff;" onclick="manualAddCircle()">➕ Dodaj Kółko Ręcznie</button>
                 <button class="btn" style="background: #1565c0; color: #fff;" onclick="manualAddXP()">✨ Dodaj XP z Lekcji</button>
             </div>
         </div>
@@ -256,25 +174,24 @@
 <script>
     let currentProfileIndex = 0;
     let spellsDB = [];
+    let knownSpells = new Set();
     let activeSpell = null;
     let circles = 0;
-    let knownSpells = new Set();
 
-    async function initApp() {
+    async function loadDatabase() {
         try {
             const response = await fetch('spells.json');
             spellsDB = await response.json();
-            loadProfileData();
+            knownSpells = loadProfileData();
             renderCheckboxes();
+            updateCounter();
         } catch (e) {
             console.error("Błąd ładowania bazy zaklęć:", e);
-            document.getElementById('checkboxes-container').innerHTML = "Błąd ładowania pliku spells.json!";
+            document.getElementById('checkboxes-container').innerHTML = "Błąd wczytywania pliku spells.json!";
         }
     }
 
-    function getProfileKey() {
-        return `hp_profile_${currentProfileIndex}`;
-    }
+    function getProfileKey() { return `hp_profile_${currentProfileIndex}`; }
 
     function loadProfileData() {
         const data = JSON.parse(localStorage.getItem(getProfileKey()) || JSON.stringify({
@@ -293,7 +210,7 @@
         document.getElementById('xp-val').value = data.xp;
         document.getElementById('lvl-val').value = data.lvl;
 
-        knownSpells = new Set(data.knownSpells);
+        return new Set(data.knownSpells);
     }
 
     function switchProfile(index) {
@@ -306,7 +223,7 @@
             else btn.classList.remove('active');
         });
 
-        loadProfileData();
+        knownSpells = loadProfileData();
         renderCheckboxes();
     }
 
@@ -472,7 +389,7 @@
         consoleBox.innerText = msg + '\n\n' + consoleBox.innerText;
     }
 
-    window.onload = initApp;
+    window.onload = loadDatabase;
 </script>
 </body>
 </html>

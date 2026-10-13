@@ -1,1 +1,1 @@
-it's a tool designed for specific, private RPG group
+it's a tool designed for a specific, private RPG group

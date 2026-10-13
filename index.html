@@ -62,8 +62,8 @@
         }
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
             background: rgba(0,0,0,0.3);
             padding: 10px;
             border-radius: 8px;
@@ -71,10 +71,11 @@
             margin-bottom: 15px;
         }
         .stat-box { text-align: center; }
-        .stat-box label { display: block; font-size: 0.85em; color: var(--gold); margin-bottom: 3px; }
+        .stat-box label { display: block; font-size: 0.8em; color: var(--gold); margin-bottom: 3px; font-weight: bold; }
         .stat-box input {
-            width: 50px; text-align: center; background: var(--parchment);
-            border: 1px solid var(--gold); border-radius: 4px; font-weight: bold; font-size: 1.1em;
+            width: 100%; max-width: 45px; text-align: center; background: var(--parchment);
+            border: 1px solid var(--gold); border-radius: 4px; font-weight: bold; font-size: 1em;
+            box-sizing: border-box;
         }
         .btn {
             background: linear-gradient(135deg, #d4af37, #aa820a);
@@ -152,6 +153,8 @@
             <div class="stat-box"><label>DEF</label><input type="number" id="def-val" value="1" onchange="saveCurrentProfile()"></div>
             <div class="stat-box"><label>UTL</label><input type="number" id="utl-val" value="3" onchange="saveCurrentProfile()"></div>
             <div class="stat-box"><label>INT</label><input type="number" id="int-val" value="3" onchange="saveCurrentProfile()"></div>
+            <div class="stat-box"><label>STR</label><input type="number" id="str-val" value="1" onchange="saveCurrentProfile()"></div>
+            <div class="stat-box"><label>DEX</label><input type="number" id="dex-val" value="1" onchange="saveCurrentProfile()"></div>
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -176,11 +179,13 @@
                     <option value="ALL">-- Wszystkie lata i kategorie --</option>
                 </select>
                 <select id="filter-type" class="select-box" onchange="renderAllDatabaseList()">
-                    <option value="ALL">-- Wszystkie typy (OFF/DEF/UTL/INT) --</option>
+                    <option value="ALL">-- Wszystkie typy --</option>
                     <option value="OFF">OFF (Ofensywne)</option>
                     <option value="DEF">DEF (Defensywne)</option>
                     <option value="UTL">UTL (Użytkowe)</option>
                     <option value="INT">INT (Inteligencja/Eliksiry)</option>
+                    <option value="STR">STR (Siła)</option>
+                    <option value="DEX">DEX (Zręczność)</option>
                 </select>
             </div>
 
@@ -286,19 +291,21 @@
         const raw = localStorage.getItem(getProfileKey());
         const data = raw ? JSON.parse(raw) : {
             name: currentProfileIndex === 0 ? "Nicolaus Saltzenfast" : `Postać ${currentProfileIndex + 1}`,
-            stats: {off: 2, def: 1, utl: 3, int: 3},
+            stats: {off: 2, def: 1, utl: 3, int: 3, str: 1, dex: 1},
             xp: 120,
             lvl: 10,
             progress: {}
         };
 
         document.getElementById('char-name').value = data.name;
-        document.getElementById('off-val').value = data.stats.off;
-        document.getElementById('def-val').value = data.stats.def;
-        document.getElementById('utl-val').value = data.stats.utl;
-        document.getElementById('int-val').value = data.stats.int;
-        document.getElementById('xp-val').value = data.xp;
-        document.getElementById('lvl-val').value = data.lvl;
+        document.getElementById('off-val').value = data.stats.off ?? 2;
+        document.getElementById('def-val').value = data.stats.def ?? 1;
+        document.getElementById('utl-val').value = data.stats.utl ?? 3;
+        document.getElementById('int-val').value = data.stats.int ?? 3;
+        document.getElementById('str-val').value = data.stats.str ?? 1;
+        document.getElementById('dex-val').value = data.stats.dex ?? 1;
+        document.getElementById('xp-val').value = data.xp ?? 0;
+        document.getElementById('lvl-val').value = data.lvl ?? 1;
 
         profileProgress = data.progress || {};
         selectedSpellName = data.selectedSpell || null;
@@ -311,7 +318,9 @@
                 off: parseInt(document.getElementById('off-val').value) || 0,
                 def: parseInt(document.getElementById('def-val').value) || 0,
                 utl: parseInt(document.getElementById('utl-val').value) || 0,
-                int: parseInt(document.getElementById('int-val').value) || 0
+                int: parseInt(document.getElementById('int-val').value) || 0,
+                str: parseInt(document.getElementById('str-val').value) || 0,
+                dex: parseInt(document.getElementById('dex-val').value) || 0
             },
             xp: parseInt(document.getElementById('xp-val').value) || 0,
             lvl: parseInt(document.getElementById('lvl-val').value) || 1,
@@ -414,7 +423,7 @@
         renderAllSections();
     }
 
-    function drawFilteredRandom() {
+        function drawFilteredRandom() {
         const catFilter = document.getElementById('filter-category').value;
         const typeFilter = document.getElementById('filter-type').value;
         const searchVal = document.getElementById('search-input').value.toLowerCase();
@@ -490,6 +499,8 @@
         const def = document.getElementById('def-val').value;
         const utl = document.getElementById('utl-val').value;
         const int = document.getElementById('int-val').value;
+        const str = document.getElementById('str-val').value;
+        const dex = document.getElementById('dex-val').value;
         const xp = document.getElementById('xp-val').value;
         const lvl = document.getElementById('lvl-val').value;
 
@@ -500,6 +511,8 @@
         txt += `Statystyka DEF: ${def}\n`;
         txt += `Statystyka UTL: ${utl}\n`;
         txt += `Statystyka INT: ${int}\n`;
+        txt += `Statystyka STR: ${str}\n`;
+        txt += `Statystyka DEX: ${dex}\n`;
         txt += `\n--- OPANOWANE UMIEJĘTNOŚCI ---\n`;
 
         const completed = Object.keys(profileProgress).filter(n => profileProgress[n] >= 5);
@@ -620,7 +633,9 @@
             off: parseInt(document.getElementById('off-val').value) || 0,
             def: parseInt(document.getElementById('def-val').value) || 0,
             utl: parseInt(document.getElementById('utl-val').value) || 0,
-            int: parseInt(document.getElementById('int-val').value) || 0
+            int: parseInt(document.getElementById('int-val').value) || 0,
+            str: parseInt(document.getElementById('str-val').value) || 0,
+            dex: parseInt(document.getElementById('dex-val').value) || 0
         };
 
         const diceCount = stats[spellObj.type.toLowerCase()] || 3;
@@ -654,3 +669,7 @@
 </script>
 </body>
 </html>
+
+
+
+            

@@ -68,7 +68,7 @@
             padding: 10px;
             border-radius: 8px;
             border: 1px solid var(--gold);
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
         .stat-box { text-align: center; }
         .stat-box label { display: block; font-size: 0.8em; color: var(--gold); margin-bottom: 3px; font-weight: bold; }
@@ -76,6 +76,16 @@
             width: 100%; max-width: 45px; text-align: center; background: var(--parchment);
             border: 1px solid var(--gold); border-radius: 4px; font-weight: bold; font-size: 1em;
             box-sizing: border-box;
+        }
+        .hp-info-box {
+            background: rgba(198, 40, 40, 0.15);
+            border: 1px solid var(--danger);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.95em;
         }
         .btn {
             background: linear-gradient(135deg, #d4af37, #aa820a);
@@ -128,7 +138,6 @@
 <div class="container">
     <h1>🧙‍♂️ Magiczny Grimoire</h1>
 
-    <!-- WYBÓR PROFILU -->
     <div class="profile-selector" id="profile-selector">
         <button class="profile-btn active" onclick="switchProfile(0)">Postać 1</button>
         <button class="profile-btn" onclick="switchProfile(1)">Postać 2</button>
@@ -136,7 +145,6 @@
         <button class="profile-btn" onclick="switchProfile(3)">Postać 4</button>
     </div>
 
-    <!-- EKRAN 1: KONFIGURACJA I SELEKCJA -->
     <div id="setup-screen">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h2 style="margin:0;">🔮 Konfiguracja Postaci</h2>
@@ -155,6 +163,11 @@
             <div class="stat-box"><label>INT</label><input type="number" id="int-val" value="3" onchange="saveCurrentProfile()"></div>
             <div class="stat-box"><label>STR</label><input type="number" id="str-val" value="1" onchange="saveCurrentProfile()"></div>
             <div class="stat-box"><label>DEX</label><input type="number" id="dex-val" value="1" onchange="saveCurrentProfile()"></div>
+        </div>
+
+        <div class="hp-info-box">
+            <span>❤️ Punkty Życia (HP): <strong id="hp-display" style="color: #ff6b6b;">10</strong> (Baza 10 + 1 za każde 3 STR)</span>
+            <span style="font-size: 0.85em; color: var(--gold);">Pula kości = 3 + (Stat / 3)</span>
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -200,7 +213,6 @@
         <button class="btn" onclick="startGrimoire()">📖 OTWÓRZ GRIMOIRE ➔</button>
     </div>
 
-    <!-- EKRAN OPCJI / ZARZĄDZANIA PROFILEM -->
     <div id="options-screen" class="hidden">
         <h2>⚙️ Zarządzanie Profilem</h2>
         <p style="text-align: center; color: var(--gold); font-size: 0.9em;" id="options-profile-name">-</p>
@@ -210,7 +222,7 @@
             
             <div>
                 <label class="btn" style="display: block; text-align: center; cursor: pointer; margin-top:0; background: linear-gradient(135deg, #1565c0, #0d47a1); color: #fff;">
-                    📂 Importuj Profil (JSON)
+                    📂 Import (JSON)
                     <input type="file" id="import-file-input" accept=".json" style="display: none;" onchange="importJSON(event)">
                 </label>
             </div>
@@ -222,9 +234,7 @@
 
         <button class="btn" style="background: #333; color: var(--gold); border: 1px solid var(--gold);" onclick="closeOptionsScreen()">🔙 Powrót do Konfiguracji</button>
     </div>
-
-    <!-- EKRAN 2: GRIMOIRE -->
-    <div id="grimoire-screen" class="hidden">
+        <div id="grimoire-screen" class="hidden">
         <div style="display: flex; gap: 10px; align-items: center; float: left;">
             <button class="btn btn-small" style="width: auto;" onclick="showSetup()">⚙️ Powrót do Profilu</button>
             <button class="btn btn-small btn-danger" style="width: auto;" onclick="resetCurrentSpellProgress()">🔄 Resetuj Postęp</button>
@@ -287,6 +297,12 @@
 
     function getProfileKey() { return `hp_profile_${currentProfileIndex}`; }
 
+    function updateHPDisplay() {
+        const strVal = parseInt(document.getElementById('str-val').value) || 0;
+        const totalHp = 10 + Math.floor(strVal / 3);
+        document.getElementById('hp-display').innerText = totalHp;
+    }
+
     function loadProfileData() {
         const raw = localStorage.getItem(getProfileKey());
         const data = raw ? JSON.parse(raw) : {
@@ -309,6 +325,7 @@
 
         profileProgress = data.progress || {};
         selectedSpellName = data.selectedSpell || null;
+        updateHPDisplay();
     }
 
     function saveCurrentProfile() {
@@ -328,6 +345,7 @@
             selectedSpell: selectedSpellName
         };
         localStorage.setItem(getProfileKey(), JSON.stringify(data));
+        updateHPDisplay();
     }
 
     function switchProfile(index) {
@@ -377,7 +395,7 @@
             const div = document.createElement('div');
             div.className = 'item-row';
             const isChecked = (selectedSpellName === name) ? 'checked' : '';
-            div.innerHTML = `<input type="radio" name="spell-select" value="${name}" ${isChecked} onchange="selectSpell('${name}')">
+            div.innerHTML = `<input type="radio" name="spell-select" value="${name}" ${isChecked} onchange="selectSpellFromGroup('inprogress', '${name}')">
                              <span class="badge">${circles}/5 🟡</span> <b>${name}</b>`;
             container.appendChild(div);
         });
@@ -409,21 +427,28 @@
             const div = document.createElement('div');
             div.className = 'item-row';
             const isChecked = (selectedSpellName === s.name) ? 'checked' : '';
-            div.innerHTML = `<input type="radio" name="spell-select" value="${s.name}" ${isChecked} onchange="selectSpell('${s.name}')">
+            div.innerHTML = `<input type="radio" name="spell-select" value="${s.name}" ${isChecked} onchange="selectSpellFromGroup('database', '${s.name}')">
                              <span class="badge">${currentCircles}/5 ${currentCircles === 5 ? '🟢' : '⚪'}</span>
                              <span>[${s.category.toUpperCase()}] <b>${s.name}</b> (${s.type})</span>`;
             container.appendChild(div);
         });
     }
 
-    function selectSpell(name) {
+    function selectSpellFromGroup(group, name) {
         selectedSpellName = name;
         if (!profileProgress[name]) profileProgress[name] = 0;
         saveCurrentProfile();
-        renderAllSections();
+        
+        document.querySelectorAll('input[name="spell-select"]').forEach(input => {
+            if (input.value === name) {
+                input.checked = true;
+            } else {
+                input.checked = false;
+            }
+        });
     }
 
-        function drawFilteredRandom() {
+    function drawFilteredRandom() {
         const catFilter = document.getElementById('filter-category').value;
         const typeFilter = document.getElementById('filter-type').value;
         const searchVal = document.getElementById('search-input').value.toLowerCase();
@@ -442,7 +467,8 @@
         }
 
         const picked = candidates[Math.floor(Math.random() * candidates.length)];
-        selectSpell(picked.name);
+        selectSpellFromGroup('database', picked.name);
+        renderAllSections();
         alert(`🎲 Wylosowano umiejętność: ${picked.name} [${picked.category.toUpperCase()}]`);
     }
 
@@ -503,9 +529,10 @@
         const dex = document.getElementById('dex-val').value;
         const xp = document.getElementById('xp-val').value;
         const lvl = document.getElementById('lvl-val').value;
+        const totalHp = 10 + Math.floor(parseInt(str || 0) / 3);
 
         let txt = `Imię Postaci: ${charName}\n`;
-        txt += `Poziom (LVL): ${lvl}\n`;
+        txt += `Poziom (LVL): ${lvl} | HP: ${totalHp}\n`;
         txt += `Punkty XP: ${xp}\n`;
         txt += `Statystyka OFF: ${off}\n`;
         txt += `Statystyka DEF: ${def}\n`;
@@ -638,7 +665,9 @@
             dex: parseInt(document.getElementById('dex-val').value) || 0
         };
 
-        const diceCount = stats[spellObj.type.toLowerCase()] || 3;
+        const rawStatValue = stats[spellObj.type.toLowerCase()] || 0;
+        const diceCount = 3 + Math.floor(rawStatValue / 3);
+
         let successes = 0;
         let rolls = [];
         for(let i=0; i<diceCount; i++) {
@@ -652,7 +681,7 @@
         saveCurrentProfile();
 
         updateGrimoireUI();
-        const discordCmd = `/r ${diceCount}d100>>${spellObj.threshold-1} ${selectedSpellName}`;
+        const discordCmd = `/r command: ${diceCount}d100`;
         logConsole(`► ROLL ${selectedSpellName} (${diceCount}D100): [${rolls.join(', ')}]\n   Sukcesy: +${successes} Kółko | Discord: ${discordCmd}`);
 
         if (newCircles >= 5) {
@@ -669,7 +698,3 @@
 </script>
 </body>
 </html>
-
-
-
-            

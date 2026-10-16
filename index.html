@@ -157,17 +157,17 @@
         </div>
 
         <div class="stats-grid">
-            <div class="stat-box"><label>OFF</label><input type="number" id="off-val" value="2" onchange="saveCurrentProfile()" oninput="updateStatsDisplay()"></div>
-            <div class="stat-box"><label>DEF</label><input type="number" id="def-val" value="1" onchange="saveCurrentProfile()" oninput="updateStatsDisplay()"></div>
+            <div class="stat-box"><label>OFF</label><input type="number" id="off-val" value="2" onchange="saveCurrentProfile()"></div>
+            <div class="stat-box"><label>DEF</label><input type="number" id="def-val" value="1" onchange="saveCurrentProfile()"></div>
             <div class="stat-box"><label>UTL</label><input type="number" id="utl-val" value="3" onchange="saveCurrentProfile()" oninput="updateStatsDisplay()"></div>
-            <div class="stat-box"><label>INT</label><input type="number" id="int-val" value="3" onchange="saveCurrentProfile()" oninput="updateStatsDisplay()"></div>
+            <div class="stat-box"><label>INT</label><input type="number" id="int-val" value="3" onchange="saveCurrentProfile()"></div>
             <div class="stat-box"><label>STR</label><input type="number" id="str-val" value="1" onchange="saveCurrentProfile()" oninput="updateStatsDisplay()"></div>
-            <div class="stat-box"><label>DEX</label><input type="number" id="dex-val" value="1" onchange="saveCurrentProfile()" oninput="updateStatsDisplay()"></div>
+            <div class="stat-box"><label>DEX</label><input type="number" id="dex-val" value="1" onchange="saveCurrentProfile()"></div>
         </div>
 
         <div class="hp-info-box">
             <span>❤️ Punkty Życia (HP): <strong id="hp-display" style="color: #ff6b6b;">10</strong> (Baza 10 + 1 za każde 3 STR)</span>
-            <span style="font-size: 0.85em; color: var(--gold);">🎲 Pula kości dla wybranego zaklęcia: <strong id="pool-dice-display" style="color: var(--gold-bright);">3d100</strong></span>
+            <span style="font-size: 0.85em; color: var(--gold);">🎲 Pula kości na zaklęcia (3 + UTL/3): <strong id="pool-dice-display" style="color: var(--gold-bright);">4d100</strong></span>
         </div>
 
         <div style="display: flex; gap: 10px; margin-bottom: 15px;">
@@ -293,15 +293,9 @@
         const str = parseInt(document.getElementById('str-val').value) || 0;
         document.getElementById('hp-display').innerText = 10 + Math.floor(str / 3);
 
-        let type = 'UTL';
-        if (selectedSpellName) {
-            const s = spellsDB.find(x => x.name === selectedSpellName);
-            if (s && s.type) type = s.type.toUpperCase();
-        }
-        const statEl = document.getElementById(type.toLowerCase() + '-val');
-        const val = statEl ? (parseInt(statEl.value) || 0) : 0;
-        const dice = 3 + Math.floor(val / 3);
-        document.getElementById('pool-dice-display').innerText = `${dice}d100 (${type}: ${val})`;
+        const utl = parseInt(document.getElementById('utl-val').value) || 0;
+        const dice = 3 + Math.floor(utl / 3);
+        document.getElementById('pool-dice-display').innerText = `${dice}d100 (UTL: ${utl})`;
     }
 
     function loadProfileData() {
@@ -526,9 +520,9 @@
         let circles = profileProgress[selectedSpellName] || 0;
         if (circles >= 5) { alert('W pełni opanowane!'); return; }
 
-        const s = spellsDB.find(x => x.name === selectedSpellName) || {type: 'UTL', threshold: 10};
-        const statVal = parseInt(document.getElementById(s.type.toLowerCase() + '-val').value) || 0;
-        const diceCount = 3 + Math.floor(statVal / 3);
+        const s = spellsDB.find(x => x.name === selectedSpellName) || {threshold: 10};
+        const utlVal = parseInt(document.getElementById('utl-val').value) || 0;
+        const diceCount = 3 + Math.floor(utlVal / 3);
 
         let successes = 0, rolls = [];
         for(let i=0; i<diceCount; i++) {

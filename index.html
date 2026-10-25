@@ -145,7 +145,7 @@
         <button class="profile-btn" onclick="switchProfile(2)">Postać 3</button>
         <button class="profile-btn" onclick="switchProfile(3)">Postać 4</button>
     </div>
-        <div id="setup-screen">
+    <div id="setup-screen">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <h2 style="margin:0;">🔮 Konfiguracja Postaci</h2>
             <button class="btn btn-small" style="background:#333; color:var(--gold); border:1px solid var(--gold);" onclick="openOptionsScreen()">⚙️ Opcje Profilu</button>
@@ -234,7 +234,7 @@
 
         <button class="btn" style="background: #333; color: var(--gold); border: 1px solid var(--gold);" onclick="closeOptionsScreen()">🔙 Powrót do Konfiguracji</button>
     </div>
-        <div id="grimoire-screen" class="hidden">
+    <div id="grimoire-screen" class="hidden">
         <div style="display: flex; gap: 10px; align-items: center; float: left;">
             <button class="btn btn-small" style="width: auto;" onclick="showSetup()">⚙️ Powrót</button>
             <button class="btn btn-small btn-danger" style="width: auto;" onclick="resetCurrentSpellProgress()">🔄 Reset</button>
@@ -385,19 +385,32 @@
         if (filtered.length === 0) { c.innerText = 'Brak wyników.'; return; }
         filtered.forEach(s => {
             const cur = profileProgress[s.name] || 0;
+            const isCompleted = cur >= 5;
             const checked = selectedSpellName === s.name ? 'checked' : '';
+            
             const div = document.createElement('div');
             div.className = 'item-row';
-            div.innerHTML = `<input type="radio" name="spell-db" value="${s.name}" ${checked} onchange="selectSpellAny('${s.name}')"> <span class="badge">${cur}/5 ${cur === 5 ? '🟢' : '⚪'}</span> <span>[${s.category.toUpperCase()}] <b>${s.name}</b> (${s.type})</span>`;
+            
+            if (isCompleted) {
+                div.innerHTML = `<span style="display:inline-block; width:18px; margin-right:10px; text-align:center;">🔒</span> <span class="badge">5/5 🟢</span> <span>[${s.category.toUpperCase()}] <b>${s.name}</b> (${s.type}) - <i>Opanowane</i></span>`;
+            } else {
+                div.innerHTML = `<input type="radio" name="spell-db" value="${s.name}" ${checked} onchange="selectSpellAny('${s.name}')"> <span class="badge">${cur}/5 ⚪</span> <span>[${s.category.toUpperCase()}] <b>${s.name}</b> (${s.type})</span>`;
+            }
             c.appendChild(div);
         });
     }
 
     function selectSpellAny(name) {
+        if ((profileProgress[name] || 0) >= 5) {
+            alert('Ta umiejętność jest już w pełni opanowana i nie można jej ponownie wybrać do nauki.');
+            return;
+        }
         selectedSpellName = name;
         if (!profileProgress[name]) profileProgress[name] = 0;
         saveCurrentProfile();
-        document.querySelectorAll('input[type="radio"]').forEach(i => i.checked = (i.value === name));
+        document.querySelectorAll('input[type="radio"]').forEach(i => {
+            if (i.value === name) i.checked = true;
+        });
         updateStatsDisplay();
     }
 
@@ -405,8 +418,10 @@
         const catF = document.getElementById('filter-category').value;
         const typeF = document.getElementById('filter-type').value;
         const search = document.getElementById('search-input').value.toLowerCase();
+        
         const cand = spellsDB.filter(s => ((profileProgress[s.name] || 0) < 5) && (catF === 'ALL' || s.category === catF) && (typeF === 'ALL' || s.type === typeF) && (!search || s.name.toLowerCase().includes(search)));
-        if (cand.length === 0) { alert('Brak umiejętności!'); return; }
+        
+        if (cand.length === 0) { alert('Brak nieopanowanych umiejętności pasujących do filtrów!'); return; }
         const p = cand[Math.floor(Math.random() * cand.length)];
         selectSpellAny(p.name);
         renderAllSections();
@@ -497,7 +512,14 @@
     function manualAddCircle() {
         if (!selectedSpellName) return;
         let c = profileProgress[selectedSpellName] || 0;
-        if (c < 5) { profileProgress[selectedSpellName] = c + 1; saveCurrentProfile(); updateGrimoireUI(); }
+        if (c < 5) {
+            profileProgress[selectedSpellName] = c + 1;
+            if (profileProgress[selectedSpellName] >= 5) {
+                grantCompletionXP(selectedSpellName);
+            }
+            saveCurrentProfile(); 
+            updateGrimoireUI(); 
+        }
     }
 
     function resetCurrentSpellProgress() {
@@ -516,28 +538,61 @@
         }
     }
 
+    function getXPRewardForSpell(spellObj) {
+        const cat = (spellObj.category || '').toLowerCase();
+        if (cat.includes('heroic') || cat.includes('heroiczne')) return 40;
+        if (cat.includes('rok 1') || cat.includes('1 rok')) return 5;
+        if (cat.includes('rok 2') || cat.includes('2 rok')) return 10;
+        if (cat.includes('rok 3') || cat.includes('3 rok')) return 15;
+        if (cat.includes('rok 4') || cat.includes('4 rok')) return 20;
+        if (cat.includes('rok 5') || cat.includes('5 rok')) return 25;
+        if (cat.includes('rok 6') || cat.includes('6 rok')) return 30;
+        if (cat.includes('rok 7') || cat.includes('7 rok')) return 35;
+        return 5; // Domyślnie rok 1
+    }
+
+    function grantCompletionXP(spellName) {
+        const s = spellsDB.find(x => x.name === spellName);
+        if (!s) return;
+        const xpReward = getXPRewardForSpell(s);
+        const xpField = document.getElementById('xp-val');
+        const currentXp = parseInt(xpField.value) || 0;
+        xpField.value = currentXp + xpReward;
+        alert(`🎉 Opanowałeś umiejętność: ${spellName}! Przyznano nagrodę: +${xpReward} XP.`);
+    }
+
     function executeRoll() {
         if (!selectedSpellName) return;
         let circles = profileProgress[selectedSpellName] || 0;
-        if (circles >= 5) { alert('W pełni opanowane!'); return; }
+        if (circles >= 5) { alert('Ta umiejętność jest już w pełni opanowana!'); return; }
 
-        const s = spellsDB.find(x => x.name === selectedSpellName) || {threshold: 10};
+        const s = spellsDB.find(x => x.name === selectedSpellName) || {threshold: 10, category: ''};
         const utlVal = parseInt(document.getElementById('utl-val').value) || 0;
         const diceCount = 3 + Math.floor(utlVal / 3);
+
+        const isHeroic = (s.category || '').toLowerCase().includes('heroic') || (s.category || '').toLowerCase().includes('heroiczne');
+        const effectiveThreshold = isHeroic ? Math.max(90, s.threshold) : s.threshold;
 
         let successes = 0, rolls = [];
         for(let i=0; i<diceCount; i++) {
             let r = Math.floor(Math.random() * 100) + 1;
             rolls.push(r);
-            if (r >= s.threshold) successes++;
+            if (r >= effectiveThreshold) successes++;
         }
 
-        profileProgress[selectedSpellName] = Math.min(5, circles + successes);
+        const oldCircles = circles;
+        const newCircles = Math.min(5, circles + successes);
+        profileProgress[selectedSpellName] = newCircles;
+
+        if (oldCircles < 5 && newCircles >= 5) {
+            grantCompletionXP(selectedSpellName);
+        }
+
         saveCurrentProfile();
         updateGrimoireUI();
+        
         const cmd = `/r command: ${diceCount}d100`;
-        document.getElementById('console-output').innerText = `► ROLL ${selectedSpellName} (${diceCount}D100): [${rolls.join(', ')}]\nSukcesy: +${successes} | Discord: ${cmd}\n\n` + document.getElementById('console-output').innerText;
-        if (profileProgress[selectedSpellName] >= 5) alert(`🎉 Opanowano: ${selectedSpellName}!`);
+        document.getElementById('console-output').innerText = `► ROLL ${selectedSpellName} (${diceCount}D100, Próg: >=${effectiveThreshold}): [${rolls.join(', ')}]\nSukcesy: +${successes} | Discord: ${cmd}\n\n` + document.getElementById('console-output').innerText;
     }
 
     window.onload = loadDatabase;

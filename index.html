@@ -540,7 +540,7 @@
         const xpReward = getXPRewardForSpell(s);
 
         document.getElementById('spell-title').innerText = `${s.name} [${s.category.toUpperCase()}]`;
-        document.getElementById('spell-info').innerText = `Typ: ${s.type} | Próg: >= ${s.threshold} | Nagroda: +${xpReward} XP`;
+        document.getElementById('spell-info').innerText = `Typ: ${s.type} | Próg: >= ${s.threshold} | +${xpReward} XP`;
         document.getElementById('spell-desc').innerText = s.desc || 'Brak opisu.';
         
         let cStr = ''; for(let i=0; i<5; i++) cStr += (i < c) ? '🟢 ' : '⚪ ';

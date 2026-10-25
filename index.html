@@ -95,6 +95,13 @@
             border-radius: 6px; cursor: pointer; width: 100%; transition: all 0.2s ease; margin-top: 5px;
         }
         .btn:hover { background: var(--gold-bright); box-shadow: 0 0 10px var(--gold-bright); }
+        .btn:disabled {
+            background: #444 !important;
+            color: #888 !important;
+            cursor: not-allowed !important;
+            box-shadow: none !important;
+            border: 1px solid #555 !important;
+        }
         .btn-small { padding: 6px 12px; font-size: 0.85em; width: auto; }
         .btn-danger { background: linear-gradient(135deg, #e53935, #b71c1c); color: #fff; }
         .btn-danger:hover { background: #ff5252; box-shadow: 0 0 10px #ff5252; }
@@ -124,6 +131,8 @@
             display: flex; align-items: center; padding: 4px 0;
             border-bottom: 1px solid rgba(212, 175, 55, 0.15); font-size: 0.9em;
         }
+        .item-row.clickable { cursor: pointer; transition: background 0.2s; }
+        .item-row.clickable:hover { background: rgba(212, 175, 55, 0.1); }
         .item-row input[type="radio"] { margin-right: 10px; }
         .manual-controls { display: flex; gap: 10px; margin-top: 10px; }
         .hidden { display: none; }
@@ -237,7 +246,7 @@
     <div id="grimoire-screen" class="hidden">
         <div style="display: flex; gap: 10px; align-items: center; float: left;">
             <button class="btn btn-small" style="width: auto;" onclick="showSetup()">⚙️ Powrót</button>
-            <button class="btn btn-small btn-danger" style="width: auto;" onclick="resetCurrentSpellProgress()">🔄 Reset</button>
+            <button class="btn btn-small btn-danger" id="btn-reset-spell" style="width: auto;" onclick="resetCurrentSpellProgress()">🔄 Reset</button>
         </div>
         <span id="counter-display" style="float: right; color: var(--gold); font-size: 0.9em; margin-top: 5px;"></span>
         <div style="clear: both;"></div>
@@ -249,12 +258,12 @@
             <div class="circles-display" id="circles-box">⚪ ⚪ ⚪ ⚪ ⚪</div>
             
             <div class="manual-controls">
-                <button class="btn" style="background: var(--green-success); color: #fff;" onclick="manualAddCircle()">➕ Dodaj Kółko</button>
+                <button class="btn" id="btn-add-circle" style="background: var(--green-success); color: #fff;" onclick="manualAddCircle()">➕ Dodaj Kółko</button>
                 <button class="btn" style="background: #1565c0; color: #fff;" onclick="manualAddXP()">✨ Dodaj XP</button>
             </div>
         </div>
 
-        <button class="btn" style="margin-top: 15px; background: linear-gradient(135deg, #00b09b, #96c93d);" onclick="executeRoll()">✨ WYKONAJ ROLL (ROLL IC) ✨</button>
+        <button class="btn" id="btn-execute-roll" style="margin-top: 15px; background: linear-gradient(135deg, #00b09b, #96c93d);" onclick="executeRoll()">✨ WYKONAJ ROLL (ROLL IC) ✨</button>
         <div class="console-box" id="console-output">Gotowy do rzutów...</div>
     </div>
 </div>
@@ -346,23 +355,35 @@
     }
 
     function renderAllSections() {
-        renderList('completed-list', n => profileProgress[n] >= 5, (n) => `<span class="badge">5/5 🟢</span> <b>${n}</b>`);
-        renderList('in-progress-list', n => profileProgress[n] > 0 && profileProgress[n] < 5, (n) => {
-            const checked = selectedSpellName === n ? 'checked' : '';
-            return `<input type="radio" name="spell-prog" value="${n}" ${checked} onchange="selectSpellAny('${n}')"> <span class="badge">${profileProgress[n]}/5 🟡</span> <b>${n}</b>`;
-        });
+        renderCompletedList();
+        renderInProgressList();
         renderDatabaseList();
     }
 
-    function renderList(elemId, filterFn, htmlFn) {
-        const c = document.getElementById(elemId);
+    function renderCompletedList() {
+        const c = document.getElementById('completed-list');
         c.innerHTML = '';
-        const keys = Object.keys(profileProgress).filter(filterFn);
-        if (keys.length === 0) { c.innerText = 'Brak.'; return; }
-        keys.forEach(n => {
+        const completed = Object.keys(profileProgress).filter(n => profileProgress[n] >= 5);
+        if (completed.length === 0) { c.innerText = 'Brak opanowanych umiejętności.'; return; }
+        completed.forEach(n => {
+            const div = document.createElement('div');
+            div.className = 'item-row clickable';
+            div.onclick = () => previewSpell(n);
+            div.innerHTML = `<span class="badge">5/5 🟢</span> <b>${n}</b> <span style="font-size:0.8em; color:var(--gold); margin-left:auto;">🔍 Podgląd ➔</span>`;
+            c.appendChild(div);
+        });
+    }
+
+    function renderInProgressList() {
+        const c = document.getElementById('in-progress-list');
+        c.innerHTML = '';
+        const inProgress = Object.keys(profileProgress).filter(n => profileProgress[n] > 0 && profileProgress[n] < 5);
+        if (inProgress.length === 0) { c.innerText = 'Brak aktywnych badań/nauki.'; return; }
+        inProgress.forEach(n => {
+            const checked = selectedSpellName === n ? 'checked' : '';
             const div = document.createElement('div');
             div.className = 'item-row';
-            div.innerHTML = htmlFn(n);
+            div.innerHTML = `<input type="radio" name="spell-prog" value="${n}" ${checked} onchange="selectSpellAny('${n}')"> <span class="badge">${profileProgress[n]}/5 🟡</span> <b>${n}</b>`;
             c.appendChild(div);
         });
     }
@@ -387,12 +408,11 @@
             const cur = profileProgress[s.name] || 0;
             const isCompleted = cur >= 5;
             const checked = selectedSpellName === s.name ? 'checked' : '';
-            
             const div = document.createElement('div');
             div.className = 'item-row';
             
             if (isCompleted) {
-                div.innerHTML = `<span style="display:inline-block; width:18px; margin-right:10px; text-align:center;">🔒</span> <span class="badge">5/5 🟢</span> <span>[${s.category.toUpperCase()}] <b>${s.name}</b> (${s.type}) - <i>Opanowane</i></span>`;
+                div.innerHTML = `<span style="display:inline-block; width:18px; margin-right:10px; text-align:center;">🔒</span> <span class="badge">5/5 🟢</span> <span>[${s.category.toUpperCase()}] <b>${s.name}</b> (${s.type})</span>`;
             } else {
                 div.innerHTML = `<input type="radio" name="spell-db" value="${s.name}" ${checked} onchange="selectSpellAny('${s.name}')"> <span class="badge">${cur}/5 ⚪</span> <span>[${s.category.toUpperCase()}] <b>${s.name}</b> (${s.type})</span>`;
             }
@@ -400,11 +420,16 @@
         });
     }
 
+    function previewSpell(name) {
+        selectedSpellName = name;
+        saveCurrentProfile();
+        document.getElementById('setup-screen').classList.add('hidden');
+        document.getElementById('grimoire-screen').classList.remove('hidden');
+        updateGrimoireUI();
+    }
+
     function selectSpellAny(name) {
-        if ((profileProgress[name] || 0) >= 5) {
-            alert('Ta umiejętność jest już w pełni opanowana i nie można jej ponownie wybrać do nauki.');
-            return;
-        }
+        if ((profileProgress[name] || 0) >= 5) return;
         selectedSpellName = name;
         if (!profileProgress[name]) profileProgress[name] = 0;
         saveCurrentProfile();
@@ -418,10 +443,8 @@
         const catF = document.getElementById('filter-category').value;
         const typeF = document.getElementById('filter-type').value;
         const search = document.getElementById('search-input').value.toLowerCase();
-        
         const cand = spellsDB.filter(s => ((profileProgress[s.name] || 0) < 5) && (catF === 'ALL' || s.category === catF) && (typeF === 'ALL' || s.type === typeF) && (!search || s.name.toLowerCase().includes(search)));
-        
-        if (cand.length === 0) { alert('Brak nieopanowanych umiejętności pasujących do filtrów!'); return; }
+        if (cand.length === 0) { alert('Brak umiejętności!'); return; }
         const p = cand[Math.floor(Math.random() * cand.length)];
         selectSpellAny(p.name);
         renderAllSections();
@@ -497,15 +520,37 @@
         loadProfileData(); renderAllSections();
     }
 
+    function getXPRewardForSpell(spellObj) {
+        const cat = (spellObj.category || '').toLowerCase();
+        if (cat.includes('heroic') || cat.includes('heroiczne')) return 40;
+        if (cat.includes('rok 1') || cat.includes('1 rok')) return 5;
+        if (cat.includes('rok 2') || cat.includes('2 rok')) return 10;
+        if (cat.includes('rok 3') || cat.includes('3 rok')) return 15;
+        if (cat.includes('rok 4') || cat.includes('4 rok')) return 20;
+        if (cat.includes('rok 5') || cat.includes('5 rok')) return 25;
+        if (cat.includes('rok 6') || cat.includes('6 rok')) return 30;
+        if (cat.includes('rok 7') || cat.includes('7 rok')) return 35;
+        return 5;
+    }
+
     function updateGrimoireUI() {
         const s = spellsDB.find(x => x.name === selectedSpellName) || {name: selectedSpellName, category: 'Inne', type: 'UTL', threshold: 10};
         const c = profileProgress[selectedSpellName] || 0;
+        const isCompleted = c >= 5;
+        const xpReward = getXPRewardForSpell(s);
+
         document.getElementById('spell-title').innerText = `${s.name} [${s.category.toUpperCase()}]`;
-        document.getElementById('spell-info').innerText = `Typ: ${s.type} | Próg: >= ${s.threshold}`;
+        document.getElementById('spell-info').innerText = `Typ: ${s.type} | Próg: >= ${s.threshold} | Nagroda: +${xpReward} XP`;
         document.getElementById('spell-desc').innerText = s.desc || 'Brak opisu.';
+        
         let cStr = ''; for(let i=0; i<5; i++) cStr += (i < c) ? '🟢 ' : '⚪ ';
         document.getElementById('circles-box').innerText = cStr;
         document.getElementById('counter-display').innerText = `${document.getElementById('char-name').value} | Opanowano: ${Object.values(profileProgress).filter(v => v >= 5).length} / ${spellsDB.length}`;
+        
+        // Zabezpieczenie wyszarzenia przycisków w trybie podglądu opanowanego zaklęcia
+        document.getElementById('btn-add-circle').disabled = isCompleted;
+        document.getElementById('btn-execute-roll').disabled = isCompleted;
+
         updateStatsDisplay();
     }
 
@@ -514,9 +559,7 @@
         let c = profileProgress[selectedSpellName] || 0;
         if (c < 5) {
             profileProgress[selectedSpellName] = c + 1;
-            if (profileProgress[selectedSpellName] >= 5) {
-                grantCompletionXP(selectedSpellName);
-            }
+            if (profileProgress[selectedSpellName] >= 5) grantCompletionXP(selectedSpellName);
             saveCurrentProfile(); 
             updateGrimoireUI(); 
         }
@@ -538,26 +581,12 @@
         }
     }
 
-    function getXPRewardForSpell(spellObj) {
-        const cat = (spellObj.category || '').toLowerCase();
-        if (cat.includes('heroic') || cat.includes('heroiczne')) return 40;
-        if (cat.includes('rok 1') || cat.includes('1 rok')) return 5;
-        if (cat.includes('rok 2') || cat.includes('2 rok')) return 10;
-        if (cat.includes('rok 3') || cat.includes('3 rok')) return 15;
-        if (cat.includes('rok 4') || cat.includes('4 rok')) return 20;
-        if (cat.includes('rok 5') || cat.includes('5 rok')) return 25;
-        if (cat.includes('rok 6') || cat.includes('6 rok')) return 30;
-        if (cat.includes('rok 7') || cat.includes('7 rok')) return 35;
-        return 5; // Domyślnie rok 1
-    }
-
     function grantCompletionXP(spellName) {
         const s = spellsDB.find(x => x.name === spellName);
         if (!s) return;
         const xpReward = getXPRewardForSpell(s);
         const xpField = document.getElementById('xp-val');
-        const currentXp = parseInt(xpField.value) || 0;
-        xpField.value = currentXp + xpReward;
+        xpField.value = (parseInt(xpField.value) || 0) + xpReward;
         alert(`🎉 Opanowałeś umiejętność: ${spellName}! Przyznano nagrodę: +${xpReward} XP.`);
     }
 
